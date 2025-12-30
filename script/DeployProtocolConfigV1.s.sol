@@ -12,10 +12,10 @@ contract DeployProtocolConfigV1 is Script {
     function run() external {
         vm.startBroadcast();
 
-        // 1️⃣ Deploy V1 implementation (UUPS-enabled)
+        // Deploy V1 implementation (UUPS-enabled)
         ProtocolConfigV1 implementation = new ProtocolConfigV1();
 
-        // 2️⃣ Encode initializer call
+        // Encode initializer call
         bytes memory initData = abi.encodeWithSelector(
             ProtocolConfigV1.initialize.selector,
             msg.sender, // admin + owner
@@ -23,7 +23,7 @@ contract DeployProtocolConfigV1 is Script {
             1_000 ether // maxLimit
         );
 
-        // 3️⃣ Deploy proxy pointing to V1
+        // Deploy proxy pointing to V1
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(implementation),
             initData
