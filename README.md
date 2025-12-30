@@ -1,217 +1,129 @@
-
 <div align="center">
-    <img src="https://img.shields.io/badge/Solidity-363636?style=for-the-badge&logo=solidity&logoColor=white" />
-    <img src="https://img.shields.io/badge/Foundry-be5212?style=for-the-badge&logo=rust&logoColor=white" />
-    <img src="https://img.shields.io/badge/OpenZeppelin-4e5ee4?style=for-the-badge&logo=openzeppelin&logoColor=white" />
-    <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Solidity-0.8.20-363636?style=for-the-badge&logo=solidity&logoColor=white" />
+    <img src="https://img.shields.io/badge/Foundry-Framework-be5212?style=for-the-badge&logo=rust&logoColor=white" />
+    <img src="https://img.shields.io/badge/OpenZeppelin-Upgradeable_v5-4e5ee4?style=for-the-badge&logo=openzeppelin&logoColor=white" />
+    <img src="https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge" />
 </div>
 
 <br />
 
 <div align="center">
-  <h1>UUPS Protocol Configuration System</h1>
-  <h3>Production-Grade Upgradeable Smart Contract Architecture</h3>
-  <p>
-    <i>A reference implementation for secure, storage-safe protocol evolution using the UUPS Proxy Pattern.</i>
-  </p>
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=600&size=30&duration=4000&pause=1000&color=39A7FF&center=true&vCenter=true&width=1000&lines=UUPS+Protocol+Configuration+System;Secure+Upgradeable+Smart+Contract+Architecture;Storage-Safe+Evolution+V1+%E2%86%92+V2+%E2%86%92+V3" alt="Typing Effect" />
+</div>
+
+<br />
+
+<div align="center">
+  <a href="#-system-architecture"><b>📐 System Architecture</b></a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#-upgrade-lifecycle"><b>🔄 Upgrade Lifecycle</b></a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#-storage-layout-strategy"><b>💾 Storage Layout</b></a>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#-security-model"><b>🔒 Security Model</b></a>
 </div>
 
 <hr />
 
 ## 📖 Abstract
 
-This repository contains a **production-grade, upgradeable protocol configuration system** implemented using the **UUPS (Universal Upgradeable Proxy Standard)**.
+This repository implements a **production-grade, upgradeable protocol configuration system** utilizing the **UUPS (Universal Upgradeable Proxy Standard)**.
 
-The system demonstrates a complete, storage-safe upgrade lifecycle across multiple implementation versions (**V1 → V2 → V3**), with explicit handling of:
-* **Initialization & Re-initialization**
-* **Upgrade Authorization** (Access Control)
-* **Storage Layout Preservation**
-* **Long-term Configuration Evolution**
+It serves as a reference implementation for **storage-safe protocol evolution**, demonstrating a complete lifecycle across multiple implementation versions (**V1 → V2 → V3**). It explicitly handles initialization chaining, re-initialization, access control, and historical state preservation without compromising the proxy's storage integrity.
 
-The implementation adheres strictly to **OpenZeppelin Upgradeable Contracts (v5)** and is validated through upgrade-aware **Foundry** tests that simulate real-world mainnet fork scenarios.
+The system is rigorously tested using **Foundry**, ensuring that every upgrade maintains the protocol's invariants and storage layout compatibility.
 
 ---
 
-## 🏗 System Architecture
+## 📐 System Architecture
 
-The system utilizes the **ERC1967 Proxy** standard coupled with **UUPS** logic embedded in the implementation. This minimizes gas overhead for users while allowing the logic to be upgraded safely.
+The architecture separates state (Proxy) from logic (Implementation), ensuring low-cost operations while maintaining the flexibility to patch bugs or add features.
 
-```mermaid
-graph TD
-    User([External Consumer]) -->|Calls| Proxy[ERC1967 Proxy]
-    Proxy -.->|DelegateCall| Impl[Active Implementation]
-    
-    subgraph "Storage Layer (Proxy)"
-        Admin[Admin Address]
-        Config[Protocol Config]
-        Pause[Pause State]
-        History[Version History]
-    end
 
-    subgraph "Logic Layer (Implementations)"
-        V1[ProtocolConfigV1]
-        V2[ProtocolConfigV2]
-        V3[ProtocolConfigV3]
-    end
-
-    Impl -.-> V1
-    Impl -.-> V2
-    Impl -.-> V3
-
-```
 
 ### **Architectural Invariants**
-
-1. **Proxy Address Persistence:** The entry point address never changes.
-2. **Storage Sovereignty:** All state resides in the Proxy; the implementation is stateless logic.
-3. **UUPS Compliance:** Upgrade logic resides in the implementation (`_authorizeUpgrade`).
-4. **Append-Only Storage:** Storage slots are never reordered or deleted, ensuring data integrity.
+* **Proxy Address Persistence:** The entry point (`ERC1967Proxy`) remains constant; only the logic address changes.
+* **Logic-Embedded Upgradeability:** Unlike Transparent Proxies, the upgrade logic resides in the implementation (`_authorizeUpgrade`), reducing gas costs.
+* **Append-Only Storage:** New state variables are strictly appended to the end of the storage layout to prevent collision.
 
 ---
 
-## 🔄 Upgrade Lifecycle & Versions
+## 🔄 Upgrade Lifecycle
 
-This repository demonstrates a linear evolution of a protocol, handling increasing complexity at each stage.
+The repository simulates a real-world protocol evolution timeline:
 
-### **ProtocolConfigV1 — Base Configuration**
-
-* **Purpose:** Establishes the initial protocol state and upgrade boundaries.
-* **Capabilities:** Ownership initialization, core fee management.
+### **Phase 1: ProtocolConfigV1 (Genesis)**
+> *The Foundation*
+* **Role:** Establishes the initial storage layout and ownership model.
+* **Key Logic:** Sets up `OwnableUpgradeable` and `UUPSUpgradeable`.
 * **Storage:** `admin`, `feeBps`, `maxLimit`.
-* **Key Logic:** Implements the fundamental `UUPSUpgradeable` inheritance.
 
-### **ProtocolConfigV2 — Operational Safety**
+### **Phase 2: ProtocolConfigV2 (Operational Safety)**
+> *The Extension*
+* **Upgrade Type:** **Pure Extension** (No initialization required).
+* **New Feature:** Adds a **Circuit Breaker** (Pause/Unpause) for emergency response.
+* **Safety:** Demonstrates how to add functionality without wiping existing V1 data.
 
-* **Purpose:** Introduces emergency controls without wiping V1 state.
-* **Upgrade Type:** **Pure Extension** (No re-initialization required).
-* **Capabilities:** Pausable functionality (Circuit Breaker).
-* **Storage Added:** `bool paused` (Appended safely).
-
-### **ProtocolConfigV3 — Advanced Versioning**
-
-* **Purpose:** Enables historical tracking of configuration changes.
-* **Upgrade Type:** **Stateful Upgrade** (Requires `reinitializer(3)`).
-* **Capabilities:** Snapshot-based configuration, rollback capability, historical traceability.
-* **Storage Added:** Struct-based mappings.
-
-```solidity
-// V3 Storage Structure
-struct Config {
-    uint256 feeBps;
-    uint256 maxLimit;
-    uint256 activatedAt;
-}
-
-```
+### **Phase 3: ProtocolConfigV3 (Advanced Versioning)**
+> *The Evolution*
+* **Upgrade Type:** **Stateful Upgrade** (Requires `reinitializer`).
+* **New Feature:** Implements a historical configuration tracking system.
+* **Logic:** Allows rolling back to previous fee structures using an `activeConfigId` pointer.
 
 ---
 
 ## 💾 Storage Layout Strategy
 
-We strictly adhere to the **Append-Only Storage Pattern** to prevent storage collisions.
+We strictly adhere to the **Append-Only Storage Pattern** to prevent data corruption.
 
-| Slot | Variable | Version Introduced | Type |
-| --- | --- | --- | --- |
-| **0** | `_initialized`, `_initializing` | V1 | `uint8` (OZ Internal) |
-| **1** | `owner` | V1 | `address` (Ownable) |
-| **...** | ... | ... | ... |
-| **50** | `feeBps` | V1 | `uint256` |
-| **51** | `maxLimit` | V1 | `uint256` |
+| Slot Index | Variable Name | Version | Type |
+| :--- | :--- | :---: | :--- |
+| **0** | `_initialized` / `_initializing` | **V1** | `uint8` (OZ Internal) |
+| **1 - 49** | *(GAP)* | **V1** | `uint256[]` |
+| **50** | `feeBps` | **V1** | `uint256` |
+| **51** | `maxLimit` | **V1** | `uint256` |
 | **52** | `paused` | **V2** | `bool` |
 | **53** | `activeConfigId` | **V3** | `uint256` |
 | **54** | `configCount` | **V3** | `uint256` |
-| **55** | `configs` (Mapping) | **V3** | `mapping(uint256 => Config)` |
-
----
-
-## 🛠️ Technology Stack
-
-* **Language:** [Solidity v0.8.20+](https://soliditylang.org/)
-* **Framework:** [Foundry](https://book.getfoundry.sh/) (Forge, Cast, Anvil)
-* **Standard Library:** [OpenZeppelin Contracts Upgradeable v5](https://docs.openzeppelin.com/contracts/5.x/upgradeable)
-* **Proxy Pattern:** [ERC-1967](https://eips.ethereum.org/EIPS/eip-1967) / [UUPS](https://eips.ethereum.org/EIPS/eip-1822)
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-Ensure you have **Foundry** installed:
-
-```bash
-curl -L [https://foundry.paradigm.xyz](https://foundry.paradigm.xyz) | bash
-foundryup
-
-```
-
-### Installation
-
-```bash
-git clone [https://github.com/NexTechArchitect/uups-protocol-config.git](https://github.com/NexTechArchitect/uups-protocol-config.git)
-cd uups-protocol-config
-forge install
-
-```
-
-### Running Tests
-
-We utilize **Upgrade-Aware Testing**, validating that storage persists correctly after the code changes.
-
-```bash
-# Run all tests
-forge test
-
-# Run tests with detailed traces
-forge test -vvvv
-
-# Generate gas report
-forge test --gas-report
-
-```
+| **55** | `configs` | **V3** | `mapping` |
 
 ---
 
 ## 🔒 Security Model
 
-### OpenZeppelin v5 Alignment
+### OpenZeppelin v5 Compliance
+This system is built on the latest security patterns:
+* **No `upgradeTo`:** We strictly use `upgradeToAndCall` to ensure atomic upgrades and initialization.
+* **Namespace Storage:** Utilizes modern storage patterns to prevent collision between parent and child contracts.
+* **Access Control:** All critical functions (including upgrades) are gated via `onlyOwner`.
 
-This system is built on modern OZ patterns:
-
-* **No `upgradeTo**`: We strictly use `upgradeToAndCall` for atomic upgrades + initialization.
-* **Namespace Storage**: Prevents collisions between inheritance chains.
-* **Access Control**: Upgrades are strictly gated via `onlyOwner` modifiers on the `_authorizeUpgrade` internal function.
-
-### Critical Safety Rules implemented:
-
-1. **Initializer Versioning**: Usage of `initializer` and `reinitializer(N)` prevents re-execution attacks.
-2. **Gap Contracts**: Although UUPS is used, storage gaps are considered for future inheritance safety.
-3. **Atomic Upgrades**: V3 upgrades are executed with a payload to ensure the new state is configured in the same transaction as the code switch.
-
----
-
-## 👨‍💻 Author
-
-**NexTechArchitect**
-
-*Smart Contract Engineer & Full-Stack Web3 Developer*
-
-<a href="https://github.com/NexTechArchitect">
-<img src="https://img.shields.io/badge/GitHub-NexTechArchitect-181717?style=for-the-badge&logo=github&logoColor=white" />
-</a>
-<a href="https://www.linkedin.com/in/amit-kumar-811a11277">
-<img src="https://img.shields.io/badge/LinkedIn-Amit_Kumar-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
-</a>
-<a href="https://t.me/NexTechDev">
-<img src="https://img.shields.io/badge/Telegram-Chat_Now-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" />
-</a>
+### Critical Safety Checks
+1.  **Initializer Versioning:** Prevents re-execution attacks using `reinitializer(N)`.
+2.  **Gap Contracts:** Reserved storage slots (`__gap`) are maintained to allow future library upgrades.
+3.  **Atomic Execution:** V3 upgrades are executed with a payload to ensure the new state is configured in the same transaction as the code switch.
 
 ---
 
 <div align="center">
+
+<h3>👨‍💻 Author</h3>
+
+<p><b>NexTechArchitect</b></p>
+<p><i>Smart Contract Engineer & Full-Stack Web3 Developer</i></p>
+
+<a href="https://github.com/NexTechArchitect">
+  <img src="https://img.shields.io/badge/GitHub-NexTechArchitect-181717?style=for-the-badge&logo=github&logoColor=white" />
+</a>
+&nbsp;&nbsp;
+<a href="https://www.linkedin.com/in/amit-kumar-811a11277">
+  <img src="https://img.shields.io/badge/LinkedIn-Amit_Kumar-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
+</a>
+&nbsp;&nbsp;
+<a href="https://t.me/NexTechDev">
+  <img src="https://img.shields.io/badge/Telegram-Chat_Now-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" />
+</a>
+
+<br /><br />
 <i>Built for longevity. Engineered for safety.</i>
+
 </div>
-
-```
-
-```
