@@ -9,10 +9,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  * @title ProtocolConfigV3
  * @author NexTechArhitct
  * @notice Versioned, snapshot-based protocol configuration (UUPS enabled)
- *
- * IMPORTANT:
- * - V1 initializer ran at deploy
- * - V3 initializer MUST be reinitializer(3)
  */
 contract ProtocolConfigV3 is
     Initializable,
