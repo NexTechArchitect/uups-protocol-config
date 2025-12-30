@@ -1,297 +1,217 @@
-UUPS Protocol Configuration System
-Abstract
 
-This repository contains a production-grade, upgradeable protocol configuration system implemented using the UUPS (Universal Upgradeable Proxy Standard). The system demonstrates a complete, storage-safe upgrade lifecycle across multiple implementation versions (V1 → V2 → V3), with explicit handling of initialization, reinitialization, upgrade authorization, and long-term configuration evolution.
+<div align="center">
+    <img src="https://img.shields.io/badge/Solidity-363636?style=for-the-badge&logo=solidity&logoColor=white" />
+    <img src="https://img.shields.io/badge/Foundry-be5212?style=for-the-badge&logo=rust&logoColor=white" />
+    <img src="https://img.shields.io/badge/OpenZeppelin-4e5ee4?style=for-the-badge&logo=openzeppelin&logoColor=white" />
+    <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" />
+</div>
 
-The implementation adheres strictly to OpenZeppelin Upgradeable Contracts (v5) and is validated through upgrade-aware Foundry tests that simulate real-world protocol upgrades.
+<br />
 
-This repository is intended as a reference-quality implementation for teams designing long-lived, upgradeable smart contract systems.
+<div align="center">
+  <h1>UUPS Protocol Configuration System</h1>
+  <h3>Production-Grade Upgradeable Smart Contract Architecture</h3>
+  <p>
+    <i>A reference implementation for secure, storage-safe protocol evolution using the UUPS Proxy Pattern.</i>
+  </p>
+</div>
 
-Design Goals
+<hr />
 
-The system is designed with the following explicit goals:
+## 📖 Abstract
 
-Upgrade Safety
-Ensure that upgrades do not corrupt or overwrite existing storage.
+This repository contains a **production-grade, upgradeable protocol configuration system** implemented using the **UUPS (Universal Upgradeable Proxy Standard)**.
 
-Deterministic Upgrade Lifecycle
-Each implementation version has a clearly defined responsibility and upgrade boundary.
+The system demonstrates a complete, storage-safe upgrade lifecycle across multiple implementation versions (**V1 → V2 → V3**), with explicit handling of:
+* **Initialization & Re-initialization**
+* **Upgrade Authorization** (Access Control)
+* **Storage Layout Preservation**
+* **Long-term Configuration Evolution**
 
-Long-Term Protocol Evolution
-Support configuration changes over time without losing historical data.
+The implementation adheres strictly to **OpenZeppelin Upgradeable Contracts (v5)** and is validated through upgrade-aware **Foundry** tests that simulate real-world mainnet fork scenarios.
 
-Auditability
-Provide explicit, testable upgrade paths and initialization guarantees.
+---
 
-Compatibility with Modern Tooling
-Follow OpenZeppelin v5 patterns and Foundry-based development workflows.
+## 🏗 System Architecture
 
-System Architecture
-High-Level Structure
-┌────────────────────┐
-│ External Consumers │
-│ (Frontend / Other  │
-│  Protocol Modules) │
-└─────────┬──────────┘
-          │
-          ▼
-┌────────────────────┐
-│   ERC1967 Proxy    │
-│  (Permanent Addr) │
-└─────────┬──────────┘
-          │ delegatecall
-          ▼
-┌────────────────────┐
-│ ProtocolConfig Impl│
-│   V1 → V2 → V3     │
-└────────────────────┘
+The system utilizes the **ERC1967 Proxy** standard coupled with **UUPS** logic embedded in the implementation. This minimizes gas overhead for users while allowing the logic to be upgraded safely.
 
-Architectural Invariants
+```mermaid
+graph TD
+    User([External Consumer]) -->|Calls| Proxy[ERC1967 Proxy]
+    Proxy -.->|DelegateCall| Impl[Active Implementation]
+    
+    subgraph "Storage Layer (Proxy)"
+        Admin[Admin Address]
+        Config[Protocol Config]
+        Pause[Pause State]
+        History[Version History]
+    end
 
-The proxy address never changes
+    subgraph "Logic Layer (Implementations)"
+        V1[ProtocolConfigV1]
+        V2[ProtocolConfigV2]
+        V3[ProtocolConfigV3]
+    end
 
-All state is stored in the proxy
+    Impl -.-> V1
+    Impl -.-> V2
+    Impl -.-> V3
 
-Upgrade logic is implemented in the implementation contracts
+```
 
-Every implementation explicitly supports UUPS upgrades
+### **Architectural Invariants**
 
-Storage layout is append-only and never reordered
+1. **Proxy Address Persistence:** The entry point address never changes.
+2. **Storage Sovereignty:** All state resides in the Proxy; the implementation is stateless logic.
+3. **UUPS Compliance:** Upgrade logic resides in the implementation (`_authorizeUpgrade`).
+4. **Append-Only Storage:** Storage slots are never reordered or deleted, ensuring data integrity.
 
-Upgrade Model: UUPS
+---
 
-This system uses the UUPS proxy pattern rather than the Transparent Proxy pattern.
+## 🔄 Upgrade Lifecycle & Versions
 
-Rationale
-Property	UUPS
-Upgrade Logic Location	Implementation
-Gas Overhead	Lower
-Upgrade Flexibility	Higher
-OpenZeppelin v5 Alignment	Native
-Critical Implication
+This repository demonstrates a linear evolution of a protocol, handling increasing complexity at each stage.
 
-Because the upgrade mechanism is implemented in the logic contract:
+### **ProtocolConfigV1 — Base Configuration**
 
-Every implementation version must inherit UUPSUpgradeable and implement _authorizeUpgrade.
+* **Purpose:** Establishes the initial protocol state and upgrade boundaries.
+* **Capabilities:** Ownership initialization, core fee management.
+* **Storage:** `admin`, `feeBps`, `maxLimit`.
+* **Key Logic:** Implements the fundamental `UUPSUpgradeable` inheritance.
 
-Failure to do so permanently bricks the proxy.
+### **ProtocolConfigV2 — Operational Safety**
 
-This repository explicitly avoids that failure mode.
+* **Purpose:** Introduces emergency controls without wiping V1 state.
+* **Upgrade Type:** **Pure Extension** (No re-initialization required).
+* **Capabilities:** Pausable functionality (Circuit Breaker).
+* **Storage Added:** `bool paused` (Appended safely).
 
-Implementation Versions
-ProtocolConfigV1 — Base Configuration Layer
+### **ProtocolConfigV3 — Advanced Versioning**
 
-Purpose:
-Establish the initial protocol configuration and upgrade foundation.
+* **Purpose:** Enables historical tracking of configuration changes.
+* **Upgrade Type:** **Stateful Upgrade** (Requires `reinitializer(3)`).
+* **Capabilities:** Snapshot-based configuration, rollback capability, historical traceability.
+* **Storage Added:** Struct-based mappings.
 
-Responsibilities:
-
-Initialize protocol ownership
-
-Store core configuration parameters
-
-Enable UUPS upgrades
-
-Storage Introduced:
-
-address admin
-
-uint256 feeBps
-
-uint256 maxLimit
-
-Upgrade Considerations:
-
-Serves as the canonical base for all future versions
-
-Storage layout must remain immutable across upgrades
-
-ProtocolConfigV2 — Operational Safety Extension
-
-Purpose:
-Introduce emergency operational controls without modifying existing configuration logic.
-
-New Capabilities:
-
-Pause and unpause protocol behavior
-
-Emergency response surface
-
-Storage Added:
-
-bool paused
-
-Upgrade Characteristics:
-
-Extends V1 storage safely
-
-Does not require reinitialization
-
-Demonstrates minimal-risk incremental upgrade
-
-ProtocolConfigV3 — Versioned Configuration System
-
-Purpose:
-Enable long-term configuration evolution with full historical traceability.
-
-Core Design Concept:
-
-Configuration changes are append-only
-
-Historical configurations are immutable
-
-Active configuration is selected via an explicit pointer
-
-New Storage Model:
-
+```solidity
+// V3 Storage Structure
 struct Config {
     uint256 feeBps;
     uint256 maxLimit;
     uint256 activatedAt;
 }
 
+```
 
-Capabilities:
+---
 
-Create new configuration snapshots
+## 💾 Storage Layout Strategy
 
-Activate any existing snapshot
+We strictly adhere to the **Append-Only Storage Pattern** to prevent storage collisions.
 
-Roll back to prior configurations without redeployment
+| Slot | Variable | Version Introduced | Type |
+| --- | --- | --- | --- |
+| **0** | `_initialized`, `_initializing` | V1 | `uint8` (OZ Internal) |
+| **1** | `owner` | V1 | `address` (Ownable) |
+| **...** | ... | ... | ... |
+| **50** | `feeBps` | V1 | `uint256` |
+| **51** | `maxLimit` | V1 | `uint256` |
+| **52** | `paused` | **V2** | `bool` |
+| **53** | `activeConfigId` | **V3** | `uint256` |
+| **54** | `configCount` | **V3** | `uint256` |
+| **55** | `configs` (Mapping) | **V3** | `mapping(uint256 => Config)` |
 
-Preserve full on-chain configuration history
+---
 
-Upgrade Requirements:
+## 🛠️ Technology Stack
 
-Introduces new storage
+* **Language:** [Solidity v0.8.20+](https://soliditylang.org/)
+* **Framework:** [Foundry](https://book.getfoundry.sh/) (Forge, Cast, Anvil)
+* **Standard Library:** [OpenZeppelin Contracts Upgradeable v5](https://docs.openzeppelin.com/contracts/5.x/upgradeable)
+* **Proxy Pattern:** [ERC-1967](https://eips.ethereum.org/EIPS/eip-1967) / [UUPS](https://eips.ethereum.org/EIPS/eip-1822)
 
-Requires explicit reinitialization using reinitializer(3)
+---
 
-Initialization must be executed via upgradeToAndCall
+## 🚀 Getting Started
 
-Initialization Strategy
-Initial Deployment (V1)
+### Prerequisites
 
-Proxy is deployed with V1 as implementation
+Ensure you have **Foundry** installed:
 
-V1 initializer is executed via proxy constructor
+```bash
+curl -L [https://foundry.paradigm.xyz](https://foundry.paradigm.xyz) | bash
+foundryup
 
-Establishes base state
+```
 
-Subsequent Upgrades
-Version	Initialization Required	Mechanism
-V2	No	Pure extension
-V3	Yes	reinitializer(3)
-Critical Rule
+### Installation
 
-Any upgrade introducing new storage must include a reinitializer and must be executed via upgradeToAndCall.
+```bash
+git clone [https://github.com/NexTechArchitect/uups-protocol-config.git](https://github.com/NexTechArchitect/uups-protocol-config.git)
+cd uups-protocol-config
+forge install
 
-This rule is enforced both in code and in tests.
+```
 
-OpenZeppelin v5 Compatibility
+### Running Tests
 
-This repository is fully aligned with OpenZeppelin v5.
+We utilize **Upgrade-Aware Testing**, validating that storage persists correctly after the code changes.
 
-Notable Differences from Earlier Versions
+```bash
+# Run all tests
+forge test
 
-upgradeTo() is removed
+# Run tests with detailed traces
+forge test -vvvv
 
-Only upgradeToAndCall() is supported
+# Generate gas report
+forge test --gas-report
 
-Initializers must be explicitly managed
+```
 
-All upgrade scripts and tests in this repository comply with these constraints.
+---
 
-Storage Layout Guarantees
+## 🔒 Security Model
 
-Storage is preserved across versions as follows:
+### OpenZeppelin v5 Alignment
 
-V1
-├── admin
-├── feeBps
-└── maxLimit
+This system is built on modern OZ patterns:
 
-V2
-└── paused
+* **No `upgradeTo**`: We strictly use `upgradeToAndCall` for atomic upgrades + initialization.
+* **Namespace Storage**: Prevents collisions between inheritance chains.
+* **Access Control**: Upgrades are strictly gated via `onlyOwner` modifiers on the `_authorizeUpgrade` internal function.
 
-V3
-├── configs
-├── configCount
-└── activeConfigId
+### Critical Safety Rules implemented:
 
+1. **Initializer Versioning**: Usage of `initializer` and `reinitializer(N)` prevents re-execution attacks.
+2. **Gap Contracts**: Although UUPS is used, storage gaps are considered for future inheritance safety.
+3. **Atomic Upgrades**: V3 upgrades are executed with a payload to ensure the new state is configured in the same transaction as the code switch.
 
-No storage slots are removed, reordered, or reused.
+---
 
-Testing Methodology
+## 👨‍💻 Author
 
-Tests are written using Foundry and are designed to validate upgrade correctness, not merely functional behavior.
+**NexTechArchitect**
 
-Covered Scenarios
+*Smart Contract Engineer & Full-Stack Web3 Developer*
 
-Correct proxy initialization
+<a href="https://github.com/NexTechArchitect">
+<img src="https://img.shields.io/badge/GitHub-NexTechArchitect-181717?style=for-the-badge&logo=github&logoColor=white" />
+</a>
+<a href="https://www.linkedin.com/in/amit-kumar-811a11277">
+<img src="https://img.shields.io/badge/LinkedIn-Amit_Kumar-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
+</a>
+<a href="https://t.me/NexTechDev">
+<img src="https://img.shields.io/badge/Telegram-Chat_Now-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" />
+</a>
 
-State preservation across upgrades
+---
 
-Execution of reinitializers
+<div align="center">
+<i>Built for longevity. Engineered for safety.</i>
+</div>
 
-Snapshot creation and activation
+```
 
-Functional correctness after upgrades
-
-Why This Matters
-
-Upgradeable contracts frequently fail due to:
-
-Missing initializer calls
-
-Incorrect storage assumptions
-
-Incomplete upgrade testing
-
-This repository explicitly tests against those failure modes.
-
-Deployment & Automation
-
-The project includes a Makefile that standardizes:
-
-Local development
-
-Deployment
-
-Sequential upgrades
-
-Network selection
-
-This ensures reproducibility and minimizes operator error.
-
-Security Model
-
-Upgrade authority is restricted via ownership
-
-All upgrades are gated by _authorizeUpgrade
-
-No proxy-level admin privileges exist
-
-No deprecated upgrade patterns are used
-
-The security model is intentionally minimal and auditable.
-
-Intended Use
-
-This repository is intended for:
-
-Protocol engineering teams
-
-Developers building long-lived smart contracts
-
-Audit preparation and reference
-
-Internal tooling and infrastructure modules
-
-It is not intended as a tutorial or beginner example.
-
-Author
-
-NEXTECHARHITECT
-Smart Contract Developer
-Solidity · Foundry · Web3 Engineering
+```
