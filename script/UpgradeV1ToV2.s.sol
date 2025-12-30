@@ -11,10 +11,8 @@ contract UpgradeV1ToV2 is Script {
 
         address proxy = vm.envAddress("PROXY_ADDRESS");
 
-        // 1️⃣ Deploy V2 implementation
         ProtocolConfigV2 newImplementation = new ProtocolConfigV2();
 
-        // 2️⃣ OZ v5 upgrade method (THIS IS THE KEY)
         ProtocolConfigV1(proxy).upgradeToAndCall(
             address(newImplementation),
             ""
