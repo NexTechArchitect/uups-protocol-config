@@ -1,117 +1,166 @@
 
 <div align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=600&size=30&duration=4000&pause=1000&color=00E5FF&center=true&vCenter=true&width=1000&lines=UUPS+Protocol+Configuration+System;Secure+Upgradeable+Smart+Contract+Architecture;Storage-Safe+Evolution+V1+%E2%86%92+V2+%E2%86%92+V3" alt="Typing Effect" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&weight=700&size=30&pause=1000&color=00E5FF&center=true&vCenter=true&width=1000&height=100&lines=UUPS+Protocol+System;Universal+Upgradeable+Proxy+Standard;Storage-Safe+Evolution+V1+%E2%86%92+V2+%E2%86%92+V3;Secured+by+OpenZeppelin+%26+Foundry" alt="Typing Effect" />
 
   <br />
 
   <a href="https://github.com/NexTechArchitect/uups-protocol-config">
     <img src="https://img.shields.io/badge/Solidity-0.8.20-363636?style=for-the-badge&logo=solidity&logoColor=white" />
-    <img src="https://img.shields.io/badge/Foundry-Framework-be5212?style=for-the-badge&logo=rust&logoColor=white" />
+    <img src="https://img.shields.io/badge/Pattern-UUPS_Proxy-be5212?style=for-the-badge&logo=architecture&logoColor=white" />
+    <img src="https://img.shields.io/badge/Security-Storage_Layout-FF4500?style=for-the-badge&logo=shield&logoColor=white" />
+    <img src="https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge" />
   </a>
+
+  <br /><br />
+
+  <h3>🧬 UUPS Protocol Configuration Architecture</h3>
+  <p width="80%">
+    <b>A production-grade, storage-safe upgradeability framework.</b><br/>
+    Demonstrating atomic upgrades, historical state preservation, and gas-optimized logic replacement.
+  </p>
+
+</div>
+
+<br />
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="20%"><a href="#-system-architecture"><b>🏗 Architecture</b></a></td>
+      <td align="center" width="20%"><a href="#-data-flow--lifecycle"><b>🔄 Data Flow</b></a></td>
+      <td align="center" width="20%"><a href="#-storage-mechanics"><b>🧮 Storage</b></a></td>
+      <td align="center" width="20%"><a href="#-security-invariants"><b>🛡 Security</b></a></td>
+      <td align="center" width="20%"><a href="#-risk-mitigation"><b>⚠️ Risks</b></a></td>
+    </tr>
+  </table>
 </div>
 
 <hr />
 
-## 🧠 The Concept: "Infinite Evolution"
+## 🏗 System Architecture
 
-Most smart contracts are immutable (cannot change). This repository implements the **UUPS Standard**, allowing the protocol to **evolve like software** while keeping all user data safe in a permanent storage proxy.
+The system implements a **Separation of Concerns (SoC)** pattern: **Storage** is permanent, while **Logic** is ephemeral.
 
-> **Analogy:** Think of the **Proxy** as a **Hard Drive** (saves data) and the **Implementation** as the **Operating System** (runs logic). We can upgrade Windows (Logic) without formatting the Hard Drive (Data).
-
----
-
-## 🏗 Architecture & Data Flow
-
-This diagram shows how the user interacts with the permanent Proxy, which delegates logic to the current Implementation version.
+### 🧩 Component Stack
+The **Proxy** acts as the storage layer (Hard Drive), while the **Implementation** acts as the logic layer (CPU).
 
 ```mermaid
-graph LR
-    User((👤 User))
-    Proxy[🏢 Proxy Storage<br/>(Permanent Address)]
+graph TD
+    %% Styling
+    classDef user fill:#000,stroke:#00E5FF,stroke-width:2px,color:#fff;
+    classDef proxy fill:#1a1a1a,stroke:#be5212,stroke-width:2px,color:#fff;
+    classDef logic fill:#2d2d2d,stroke:#fff,stroke-width:1px,color:#ccc;
     
-    subgraph "Logic Layer (Replaceable)"
-        V1[📜 V1: Basic Config]
-        V2[⏸️ V2: Pausable]
-        V3[📚 V3: History]
+    User((👤 User / Admin)):::user
+    
+    subgraph "Permanent Layer (ERC-1967)"
+        Proxy[🏢 UUPS Proxy Contract<br/>(Holds ALL State & Balance)]:::proxy
     end
 
-    User ==>|Calls| Proxy
-    Proxy -.->|1. DelegateCall| V1
+    subgraph "Logic Layer (Replaceable)"
+        V1[📜 Implementation V1<br/>(Basic Logic)]:::logic
+        V2[⏸️ Implementation V2<br/>(Pausable Logic)]:::logic
+        V3[📚 Implementation V3<br/>(History Logic)]:::logic
+    end
+
+    User ==>|1. Calls Function| Proxy
+    Proxy -.->|2. DelegateCall| V1
     
-    %% Upgrade Flow
-    V1 -- "Upgrade()" --> V2
-    V2 -- "Upgrade()" --> V3
-    
-    style Proxy fill:#2a2a2a,stroke:#00E5FF,stroke-width:2px
-    style V1 fill:#1c1c1c,stroke:#666
-    style V2 fill:#1c1c1c,stroke:#666
-    style V3 fill:#1c1c1c,stroke:#00E5FF
+    %% Connections for clarity
+    V1 -.-> V2
+    V2 -.-> V3
 
 ```
 
 ---
 
-## 🧬 Protocol Evolution Timeline
+## 🔄 Data Flow & Lifecycle
 
-This system demonstrates a real-world upgrade path. Each version adds complexity without breaking the previous one.
+We use a **Sequence Diagram** to visualize exactly how an upgrade request travels through the system without corrupting data.
 
-### 🐣 Version 1: The Foundation
+### ⚡ Upgrade Sequence
 
-* **Goal:** Launch the protocol.
-* **Features:** Ownership, Fee Management (`feeBps`), Limits.
-* **Storage Used:** Slots 0-51.
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Proxy as 🏢 Proxy (Storage)
+    participant ImplV1 as 📜 Logic V1
+    participant ImplV2 as ⏸️ Logic V2
 
-### 🛡 Version 2: The Security Patch
+    Note over Proxy: State: feeBps = 500
 
-* **Goal:** Add emergency controls.
-* **Upgrade Type:** **Pure Extension** (No data reset).
-* **New Feature:** `Pausable` (Circuit Breaker).
-* **Storage Added:** `bool paused` (Slot 52).
+    Admin->>Proxy: upgradeToAndCall(address V2)
+    Proxy->>ImplV1: _authorizeUpgrade()
+    Note right of ImplV1: 1. Checks onlyOwner<br/>2. Validates UUPS
+    
+    ImplV1-->>Proxy: Success
+    Proxy->>Proxy: Update Implementation Slot
+    
+    Note over Proxy: ⚠️ SWITCHING LOGIC...
+    
+    Proxy->>ImplV2: DelegateCall (Initialize V2)
+    ImplV2-->>Proxy: State Updated (paused = false)
+    
+    Note over Proxy: New State: feeBps=500, paused=false
 
-### 🚀 Version 3: The Major Overhaul
+```
 
-* **Goal:** Enable historical data tracking.
-* **Upgrade Type:** **Stateful Upgrade** (Requires Re-initialization).
-* **New Feature:** Struct-based configuration history.
-* **Storage Added:** Mappings & Arrays (Slot 53+).
-
----
-
-## 💾 Visual Storage Layout
-
-In UUPS proxies, **Storage Layout Safety** is the #1 priority. If you mess this up, the contract bricks. We use an **Append-Only** strategy.
+### 📂 Repository Structure
 
 ```text
-[ SLOT 0  ]  👉  Initialization Status (OZ)
-[ SLOT 1  ]  👉  Owner Address
-[ ...     ]  👉  (GAP - 50 Empty Slots for safety)
-[ SLOT 50 ]  👉  uint256 feeBps      (V1)
-[ SLOT 51 ]  👉  uint256 maxLimit    (V1)
-[ SLOT 52 ]  👉  bool paused         (V2 - New!)
-[ SLOT 53 ]  👉  uint256 activeId    (V3 - New!)
-[ SLOT 54 ]  👉  mapping configs     (V3 - New!)
+uups-protocol-config/
+├── src/
+│   ├── ProtocolConfigV1.sol      // Genesis: Ownership & Fees
+│   ├── ProtocolConfigV2.sol      // Extension: Emergency Pause
+│   ├── ProtocolConfigV3.sol      // Evolution: Historical Structs
+│   └── proxy/                    // ERC1967Proxy Implementation
+├── script/
+│   ├── DeploySystem.s.sol        // Atomic Deployment
+│   └── UpgradeToV2.s.sol         // Safe Upgrade Script
+└── test/
+    ├── unit/                     // Logic Tests
+    └── integration/              // Storage Layout Validation
 
 ```
 
-> **✅ Safety Check:** New variables are strictly added to the **bottom**. Old slots are never touched or reordered.
+---
+
+## 🧮 Storage Mechanics
+
+The safety of the system relies on the **ERC-1967 Storage Slot Standard**. We mathematically derive storage locations to prevent collisions between the Proxy admin logic and the Implementation variables.
+
+### 1. Implementation Slot
+
+The address of the current logic contract is stored at a specific slot to avoid overwriting state variables (like `feeBps`).
+
+### 2. Layout Alignment
+
+We enforce **Append-Only** storage updates. New variables are added to the end of the storage layout.
+
+| Version | Slot 0 | Slot 50 | Slot 51 | Slot 52 |
+| --- | --- | --- | --- | --- |
+| **V1** | `_initialized` | `feeBps` | `maxLimit` | *(Empty)* |
+| **V2** | `_initialized` | `feeBps` | `maxLimit` | `paused` |
+| **V3** | `_initialized` | `feeBps` | `maxLimit` | `paused` |
 
 ---
 
 ## 🛡 Security Invariants
 
-We use **Foundry Invariant Tests** to mathematically prove the system is safe.
+This system is verified using **Foundry Invariant Tests**. The following properties hold true across all upgrade versions.
 
-| Invariant | Description | Status |
+| ID | Invariant Property | Status |
 | --- | --- | --- |
-| **No Data Loss** | Upgrading from V1 to V3 never deletes the `feeBps` set in V1. | ✅ |
-| **Auth Guard** | Only the `owner` can authorize an upgrade in `_authorizeUpgrade`. | ✅ |
-| **Atomicity** | V3 Initialization happens in the exact same transaction as the Upgrade. | ✅ |
-| **Proxy Stability** | The Proxy address never changes, even after 100 upgrades. | ✅ |
+| **INV_01** | **Storage Integrity:** Existing variables (`feeBps`) are never overwritten/corrupted during upgrade. | ✅ **PASS** |
+| **INV_02** | **Auth Control:** Only `owner` can call `upgradeToAndCall`. | ✅ **PASS** |
+| **INV_03** | **Initialization:** Contract cannot be re-initialized (v1) after deployment. | ✅ **PASS** |
+| **INV_04** | **Atomicity:** V3 upgrade and V3 configuration happen in the same transaction. | ✅ **PASS** |
 
 ---
 
-<div align="center">
 <br />
+
+<div align="center">
 <img src="https://raw.githubusercontent.com/rajput2107/rajput2107/master/Assets/Developer.gif" width="50" style="border-radius: 50%" />
 
 <h3>Engineered by NexTechArchitect</h3>
