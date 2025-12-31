@@ -6,9 +6,7 @@
 
   <a href="https://github.com/NexTechArchitect/uups-protocol-config">
     <img src="https://img.shields.io/badge/Solidity-0.8.20-363636?style=for-the-badge&logo=solidity&logoColor=white" />
-    <img src="https://img.shields.io/badge/Pattern-UUPS_Proxy-be5212?style=for-the-badge&logo=architecture&logoColor=white" />
-    <img src="https://img.shields.io/badge/Security-Storage_Layout-FF4500?style=for-the-badge&logo=shield&logoColor=white" />
-    <img src="https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Foundry-Framework-be5212?style=for-the-badge&logo=rust&logoColor=white" />
   </a>
 
   <br /><br />
@@ -21,164 +19,111 @@
 
 </div>
 
-<br />
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center" width="20%"><a href="#-system-architecture"><b>🏗 Architecture</b></a></td>
-      <td align="center" width="20%"><a href="#-data-flow--lifecycle"><b>🔄 Data Flow</b></a></td>
-      <td align="center" width="20%"><a href="#-storage-mechanics"><b>🧮 Storage</b></a></td>
-      <td align="center" width="20%"><a href="#-security-invariants"><b>🛡 Security</b></a></td>
-      <td align="center" width="20%"><a href="#-risk-mitigation"><b>⚠️ Risks</b></a></td>
-    </tr>
-  </table>
-</div>
-
 <hr />
+
+## 📖 Executive Summary
+
+The **UUPS Protocol Configuration System** solves the rigidity of immutable smart contracts. It implements the **Universal Upgradeable Proxy Standard (ERC-1822)**, allowing the protocol to evolve over time while keeping user data permanently secure.
+
+Unlike older "Transparent Proxies," this system places the upgrade logic inside the implementation, significantly reducing gas costs for users.
+
+> **Core Philosophy:** **"Logic Changes, Data Remains."**
+> We can swap the underlying "Brain" (Implementation) of the contract without ever touching the "Memory" (Storage Proxy).
+
+---
 
 ## 🏗 System Architecture
 
-The system implements a **Separation of Concerns (SoC)** pattern: **Storage** is permanent, while **Logic** is ephemeral.
+The architecture relies on a strict **Separation of Concerns**.
 
-### 🧩 Component Stack
-The **Proxy** acts as the storage layer (Hard Drive), while the **Implementation** acts as the logic layer (CPU).
+### 1. The Proxy (Storage Layer)
+* **Role:** The permanent address on the blockchain.
+* **Responsibility:** Holds all state variables (balances, configs, admin).
+* **Invariance:** This address **never** changes.
 
-```mermaid
-graph TD
-    %% Styling
-    classDef user fill:#000,stroke:#00E5FF,stroke-width:2px,color:#fff;
-    classDef proxy fill:#1a1a1a,stroke:#be5212,stroke-width:2px,color:#fff;
-    classDef logic fill:#2d2d2d,stroke:#fff,stroke-width:1px,color:#ccc;
-    
-    User((👤 User / Admin)):::user
-    
-    subgraph "Permanent Layer (ERC-1967)"
-        Proxy[🏢 UUPS Proxy Contract<br/>(Holds ALL State & Balance)]:::proxy
-    end
-
-    subgraph "Logic Layer (Replaceable)"
-        V1[📜 Implementation V1<br/>(Basic Logic)]:::logic
-        V2[⏸️ Implementation V2<br/>(Pausable Logic)]:::logic
-        V3[📚 Implementation V3<br/>(History Logic)]:::logic
-    end
-
-    User ==>|1. Calls Function| Proxy
-    Proxy -.->|2. DelegateCall| V1
-    
-    %% Connections for clarity
-    V1 -.-> V2
-    V2 -.-> V3
-
-```
+### 2. The Implementation (Logic Layer)
+* **Role:** The replaceable logic contract.
+* **Responsibility:** Defines how the state is modified (functions, math, logic).
+* **Invariance:** This can be swapped out instantly via `upgradeToAndCall`.
 
 ---
 
-## 🔄 Data Flow & Lifecycle
+## 🔄 Protocol Evolution Timeline
 
-We use a **Sequence Diagram** to visualize exactly how an upgrade request travels through the system without corrupting data.
+This repository simulates a real-world mainnet lifecycle, upgrading through three distinct phases:
 
-### ⚡ Upgrade Sequence
+### 🐣 Phase 1: Genesis (V1)
+* **Objective:** Launch the base protocol.
+* **Key Logic:** Sets up ownership (`OwnableUpgradeable`) and fee parameters.
+* **Storage:** Initializes `feeBps` and `maxLimit`.
 
-```mermaid
-sequenceDiagram
-    participant Admin
-    participant Proxy as 🏢 Proxy (Storage)
-    participant ImplV1 as 📜 Logic V1
-    participant ImplV2 as ⏸️ Logic V2
+### 🛡 Phase 2: Operational Safety (V2)
+* **Objective:** Add emergency controls without data loss.
+* **Upgrade Type:** **Pure Extension**.
+* **New Feature:** Adds `Pausable` functionality (Circuit Breaker).
+* **Safety:** The old `feeBps` data remains 100% intact.
 
-    Note over Proxy: State: feeBps = 500
-
-    Admin->>Proxy: upgradeToAndCall(address V2)
-    Proxy->>ImplV1: _authorizeUpgrade()
-    Note right of ImplV1: 1. Checks onlyOwner<br/>2. Validates UUPS
-    
-    ImplV1-->>Proxy: Success
-    Proxy->>Proxy: Update Implementation Slot
-    
-    Note over Proxy: ⚠️ SWITCHING LOGIC...
-    
-    Proxy->>ImplV2: DelegateCall (Initialize V2)
-    ImplV2-->>Proxy: State Updated (paused = false)
-    
-    Note over Proxy: New State: feeBps=500, paused=false
-
-```
-
-### 📂 Repository Structure
-
-```text
-uups-protocol-config/
-├── src/
-│   ├── ProtocolConfigV1.sol      // Genesis: Ownership & Fees
-│   ├── ProtocolConfigV2.sol      // Extension: Emergency Pause
-│   ├── ProtocolConfigV3.sol      // Evolution: Historical Structs
-│   └── proxy/                    // ERC1967Proxy Implementation
-├── script/
-│   ├── DeploySystem.s.sol        // Atomic Deployment
-│   └── UpgradeToV2.s.sol         // Safe Upgrade Script
-└── test/
-    ├── unit/                     // Logic Tests
-    └── integration/              // Storage Layout Validation
-
-```
+### 🚀 Phase 3: Advanced History (V3)
+* **Objective:** Enable complex historical tracking.
+* **Upgrade Type:** **Stateful Upgrade** (Requires Re-initialization).
+* **New Feature:** Migrates simple variables into a `struct`-based history array.
+* **Safety:** Uses `reinitializer(3)` to set up the new data structures atomically.
 
 ---
 
-## 🧮 Storage Mechanics
+## 🧮 Storage Layout Strategy
 
-The safety of the system relies on the **ERC-1967 Storage Slot Standard**. We mathematically derive storage locations to prevent collisions between the Proxy admin logic and the Implementation variables.
+Safety is guaranteed by adhering to the **Append-Only Storage Pattern**. New variables are strictly added to the end of the storage layout to prevent collisions.
 
-### 1. Implementation Slot
-
-The address of the current logic contract is stored at a specific slot to avoid overwriting state variables (like `feeBps`).
-
-### 2. Layout Alignment
-
-We enforce **Append-Only** storage updates. New variables are added to the end of the storage layout.
-
-| Version | Slot 0 | Slot 50 | Slot 51 | Slot 52 |
-| --- | --- | --- | --- | --- |
-| **V1** | `_initialized` | `feeBps` | `maxLimit` | *(Empty)* |
-| **V2** | `_initialized` | `feeBps` | `maxLimit` | `paused` |
-| **V3** | `_initialized` | `feeBps` | `maxLimit` | `paused` |
+| Slot Index | Variable Name | Version Introduced | Data Type |
+| :--- | :--- | :---: | :--- |
+| **0** | `_initialized` | **V1** | `uint8` |
+| **1 - 49** | *(GAP - Reserved)* | **V1** | `uint256[]` |
+| **50** | `feeBps` | **V1** | `uint256` |
+| **51** | `maxLimit` | **V1** | `uint256` |
+| **52** | `paused` | **V2** | `bool` |
+| **53** | `activeConfigId` | **V3** | `uint256` |
+| **54** | `configCount` | **V3** | `uint256` |
+| **55** | `configs` | **V3** | `mapping` |
 
 ---
 
-## 🛡 Security Invariants
+## 🛡 Security Model
 
-This system is verified using **Foundry Invariant Tests**. The following properties hold true across all upgrade versions.
+This system is rigorously verified using **Foundry**.
 
-| ID | Invariant Property | Status |
-| --- | --- | --- |
-| **INV_01** | **Storage Integrity:** Existing variables (`feeBps`) are never overwritten/corrupted during upgrade. | ✅ **PASS** |
-| **INV_02** | **Auth Control:** Only `owner` can call `upgradeToAndCall`. | ✅ **PASS** |
-| **INV_03** | **Initialization:** Contract cannot be re-initialized (v1) after deployment. | ✅ **PASS** |
-| **INV_04** | **Atomicity:** V3 upgrade and V3 configuration happen in the same transaction. | ✅ **PASS** |
+### ✅ Security Invariants
+1.  **Storage Integrity:** Existing variables (like V1 fees) are never overwritten during an upgrade.
+2.  **Access Control:** Only the `owner` can authorize an upgrade via `_authorizeUpgrade`.
+3.  **Atomicity:** Upgrades and Initializations happen in the same transaction to prevent "uninitialized" states.
+4.  **Gap Preservation:** 50 Storage Slots are always reserved (`__gap`) for future library updates.
+
+### ⚠️ Risk Mitigation
+* **Storage Collisions:** Prevented by `foundry-storage-check` CI pipelines.
+* **Re-Initialization:** Prevented by OpenZeppelin's `reinitializer` modifiers.
+* **Bricking:** `_authorizeUpgrade` is strictly implemented in every version to ensure the contract remains upgradeable.
 
 ---
 
 <br />
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/rajput2107/rajput2107/master/Assets/Developer.gif" width="50" style="border-radius: 50%" />
+  <img src="https://raw.githubusercontent.com/rajput2107/rajput2107/master/Assets/Developer.gif" width="50" style="border-radius: 50%" />
+  
+  <h3>Engineered by NexTechArchitect</h3>
+  <p><i>Protocol Design • DeFi Architecture • Security Engineering</i></p>
 
-<h3>Engineered by NexTechArchitect</h3>
-<p><i>Protocol Design • DeFi Architecture • Security Engineering</i></p>
-
-<a href="https://github.com/NexTechArchitect">
-<img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
-</a>
-&nbsp;&nbsp;
-<a href="https://www.linkedin.com/in/amit-kumar-811a11277">
-<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
-</a>
-&nbsp;&nbsp;
-<a href="https://t.me/NexTechDev">
-<img src="https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" />
-</a>
+  <a href="https://github.com/NexTechArchitect">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://www.linkedin.com/in/amit-kumar-811a11277">
+    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://t.me/NexTechDev">
+    <img src="https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" />
+  </a>
 </div>
-
-```
 
 ```
