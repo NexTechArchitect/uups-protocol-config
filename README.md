@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/badge/Foundry-Framework-be5212?style=for-the-badge&logo=rust&logoColor=white" />
   </a>
 
-  <br /><br />
+  <br />
 
   <h3>🧬 UUPS Protocol Configuration Architecture</h3>
   <p width="80%">
