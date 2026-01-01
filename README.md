@@ -110,20 +110,26 @@ This system is rigorously verified using **Foundry**.
 <div align="center">
   <img src="https://raw.githubusercontent.com/rajput2107/rajput2107/master/Assets/Developer.gif" width="50" style="border-radius: 50%" />
   
-  <h3>Engineered by NexTechArchitect</h3>
-  <p><i>Protocol Design • DeFi Architecture • Security Engineering</i></p>
+<h3>Engineered by NexTechArchitect</h3>
+<p><i>Smart Contract Development • Web3 Engineering • Solidity</i></p>
 
-  <a href="https://github.com/NexTechArchitect">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://www.linkedin.com/in/amit-kumar-811a11277">
-    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://t.me/NexTechDev">
-    <img src="https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" />
-  </a>
+
+
+
+<a href="https://github.com/NexTechArchitect">
+<img src="https://skillicons.dev/icons?i=github" height="40" />
+</a>
+&nbsp;&nbsp;
+<a href="https://linkedin.com/in/amit-kumar-811a11277">
+<img src="https://skillicons.dev/icons?i=linkedin" height="40" />
+</a>
+&nbsp;&nbsp;
+<a href="https://x.com/itZ_AmiT0">
+<img src="https://skillicons.dev/icons?i=twitter" height="40" />
+</a>
+
 </div>
+
+```
 
 ```
