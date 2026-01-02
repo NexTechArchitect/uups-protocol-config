@@ -49,7 +49,7 @@ contract ProtocolConfigUpgradeTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
-                TEST 2 — V1 → V2 UPGRADE
+                TEST 2 — V1 → V2 UPGRADE SMART CONTRACT
     //////////////////////////////////////////////////////////////*/
 
     function test_UpgradeV1ToV2_PreservesState() external {
