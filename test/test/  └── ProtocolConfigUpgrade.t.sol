@@ -55,20 +55,16 @@ contract ProtocolConfigUpgradeTest is Test {
     function test_UpgradeV1ToV2_PreservesState() external {
         vm.startPrank(admin);
 
-        // Deploy V2
         v2 = new ProtocolConfigV2();
 
-        // Upgrade via proxy
         ProtocolConfigV1(address(proxy)).upgradeToAndCall(address(v2), "");
 
         vm.stopPrank();
 
         ProtocolConfigV2 proxyV2 = ProtocolConfigV2(address(proxy));
-
-        // Old state preserved
+d
         assertEq(proxyV2.admin(), admin);
 
-        // New V2 state
         assertEq(proxyV2.paused(), false);
     }
 
@@ -79,11 +75,9 @@ contract ProtocolConfigUpgradeTest is Test {
     function test_UpgradeV2ToV3_AndSnapshotsWork() external {
         vm.startPrank(admin);
 
-        // Upgrade to V2
         v2 = new ProtocolConfigV2();
         ProtocolConfigV1(address(proxy)).upgradeToAndCall(address(v2), "");
 
-        // Upgrade to V3 WITH initializer
         v3 = new ProtocolConfigV3();
 
         bytes memory initV3 = abi.encodeWithSelector(
