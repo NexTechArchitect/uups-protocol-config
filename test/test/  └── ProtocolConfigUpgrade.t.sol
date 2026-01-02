@@ -16,10 +16,6 @@ contract ProtocolConfigUpgradeTest is Test {
 
     ERC1967Proxy proxy;
 
-    /*//////////////////////////////////////////////////////////////
-                            SETUP
-    //////////////////////////////////////////////////////////////*/
-
     function setUp() external {
         vm.startPrank(admin);
 
