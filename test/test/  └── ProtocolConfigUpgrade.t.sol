@@ -26,7 +26,7 @@ contract ProtocolConfigUpgradeTest is Test {
         bytes memory initData = abi.encodeWithSelector(
             ProtocolConfigV1.initialize.selector,
             admin,
-            100, // 1% fee
+            100, 
             1_000 ether
         );
 
