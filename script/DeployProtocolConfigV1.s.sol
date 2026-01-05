@@ -18,9 +18,9 @@ contract DeployProtocolConfigV1 is Script {
         // Encode initializer call
         bytes memory initData = abi.encodeWithSelector(
             ProtocolConfigV1.initialize.selector,
-            msg.sender, // admin + owner
+            msg.sender, 
             100, // feeBps = 1%
-            1_000 ether // maxLimit
+            1_000 ether 
         );
 
         // Deploy proxy pointing to V1
