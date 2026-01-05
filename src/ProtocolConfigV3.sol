@@ -146,9 +146,5 @@ contract ProtocolConfigV3 is
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
-    /*//////////////////////////////////////////////////////////////
-                           STORAGE GAP
-    //////////////////////////////////////////////////////////////*/
-
     uint256[50] private __gap;
 }
