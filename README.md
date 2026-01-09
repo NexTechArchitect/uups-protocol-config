@@ -9,11 +9,6 @@
   Built with Foundry · Focused on Storage Layout · Real Upgrade Lifecycle
 </p>
 
-<p align="center">
-  Author: <b>NEXTECHARHITECT</b><br/>
-  <i>Smart Contract Developer · Solidity · Foundry · Web3 Engineering</i>
-</p>
-
 <br/>
 </div>
 
