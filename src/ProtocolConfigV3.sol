@@ -71,7 +71,6 @@ contract ProtocolConfigV3 is
         if (initialFeeBps > 10_000) revert FeeTooHigh();
         if (initialMaxLimit == 0) revert InvalidLimit();
 
-        // Create first snapshot using existing V1 values
         configCount = 1;
         configs[1] = Config({
             feeBps: initialFeeBps,
