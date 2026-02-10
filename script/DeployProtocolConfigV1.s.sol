@@ -19,7 +19,7 @@ contract DeployProtocolConfigV1 is Script {
         bytes memory initData = abi.encodeWithSelector(
             ProtocolConfigV1.initialize.selector,
             msg.sender, 
-            100, // feeBps = 1%
+            100, 
             1_000 ether 
         );
 
