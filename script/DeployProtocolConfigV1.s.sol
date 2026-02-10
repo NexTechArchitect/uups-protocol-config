@@ -15,7 +15,7 @@ contract DeployProtocolConfigV1 is Script {
         // Deploy V1 implementation (UUPS-enabled)
         ProtocolConfigV1 implementation = new ProtocolConfigV1();
 
-        // Encode initializer call
+    
         bytes memory initData = abi.encodeWithSelector(
             ProtocolConfigV1.initialize.selector,
             msg.sender, 
