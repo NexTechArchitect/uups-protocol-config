@@ -12,7 +12,7 @@ contract DeployProtocolConfigV1 is Script {
     function run() external {
         vm.startBroadcast();
 
-        // Deploy V1 implementation (UUPS-enabled)
+        
         ProtocolConfigV1 implementation = new ProtocolConfigV1();
 
     
