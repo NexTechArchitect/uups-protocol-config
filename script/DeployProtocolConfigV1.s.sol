@@ -23,7 +23,7 @@ contract DeployProtocolConfigV1 is Script {
             1_000 ether 
         );
 
-        // Deploy proxy pointing to V1
+        
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(implementation),
             initData
