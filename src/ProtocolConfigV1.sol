@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
  * @author NexTechArhitct
  * @notice Base protocol configuration (UUPS-enabled)
  *
+ *
  * V1 responsibilities:
  * - Set admin
  * - Store basic config values
