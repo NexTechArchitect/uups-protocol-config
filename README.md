@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# 🧬 UUPS Upgradeable Protocol
+#  UUPS Upgradeable Protocol
 
 <p align="center">
   <strong>A production-ready, storage-safe implementation of EIP-1822 UUPS Proxies.</strong>
