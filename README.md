@@ -206,8 +206,6 @@ While it implements production-grade patterns, upgradeable systems introduce sig
 
 
 
-
-
 <a href="https://github.com/NexTechArchitect">GitHub</a> •
 <a href="https://www.google.com/search?q=https://twitter.com/NexTechArchitect">Twitter</a>
 </div>
